@@ -28,5 +28,5 @@ aws ssm put-parameter 		--name 		"/${DOMAIN_NAME}/dev/waterapi/SES_SENDER_EMAIL_
 							--description "An environment credential needed for WaterApiSES to send magic link emails."
 echo "parameters uploaded!"
 # deploy global stack
-sh ./scripts/deploy.sh global $AWS_PROFILE
-echo "\nglobal stack initialized!"
+#sh ./scripts/deploy.sh global $AWS_PROFILE
+#echo "\nglobal stack initialized!"

@@ -2,7 +2,11 @@
 ENVIRONMENT=$1
 TEMPLATE=./cloudformation/environment.yaml
 export $(grep -v '^#' .env | xargs)
-[[ $ENVIRONMENT != prod ]] && SUBDOMAIN="$ENVIRONMENT". || SUBDOMAIN=""
+if [ $ENVIRONMENT != prod ]; then
+    SUBDOMAIN="$ENVIRONMENT".
+else
+    SUBDOMAIN=""
+fi
 
 if [ $ENVIRONMENT != 'global' ] && [ $ENVIRONMENT != 'prod' ] && [ $ENVIRONMENT != 'dev' ] && [ $ENVIRONMENT != 'avery' ]; then
     echo "Environment $ENVIRONMENT is not valid"
@@ -12,8 +16,13 @@ elif [ ! -f $TEMPLATE ]; then
     exit 1
 else
   AWS_PROFILE=$2
-  BUCKET_PREFIX=$(sed -e "s,\.,-," <<<$DOMAIN_NAME)
-  PROJECT="$BUCKET_PREFIX"-"$ENVIRONMENT"-stack
+  #BUCKET_PREFIX=$(sed -e "s,\.,-," <<<$DOMAIN_NAME)
+  #BUCKET_PREFIX=$(sed -e "s,\.,-," $DOMAIN_NAME)
+  echo "A---------"
+  echo $BUCKET_PREFIX
+  echo "B---------"
+  echo $DOMAIN_NAME
+  PROJECT="$NAMESPACE"-"$ENVIRONMENT"-stack
   DEPLOYMENT_BUCKET=$PROJECT
   DOMAIN_NAME_REDIRECT="${SUBDOMAIN}www.${DOMAIN_NAME}"
   FQDN=${SUBDOMAIN}$DOMAIN_NAME
@@ -24,7 +33,8 @@ else
 
   # Global
   # - fragments for account-wide exported output value names
-  NAMESPACE=$(sed -e "s,\.,-," <<< $DOMAIN_NAME)
+  #NAMESPACE=$(sed -e "s,\.,-," <<< $DOMAIN_NAME)
+  #NAMESPACE=$BUCKET_PREFIX
   GLOBAL_TLS_CERTIFICATE_ARN_FRAGMENT="${NAMESPACE}-global-TLSCertificateArn"
   GLOBAL_HOSTEDZONE_FRAGMENT="${NAMESPACE}-global-HostedZoneId"
 
@@ -44,7 +54,7 @@ else
     sed -i '' -e "s%<GlobalTLSCertificateArn>%$GLOBAL_TLS_CERTIFICATE_ARN_FRAGMENT%" ./cloudformation/global.template.yaml
     sed -i '' -e "s%<GlobalHostedZoneId>%$GLOBAL_HOSTEDZONE_FRAGMENT%" ./cloudformation/global.template.yaml
     GLOBAL_TEMPLATE=./cloudformation/global.template.yaml
-    GLOBAL_STACK="$BUCKET_PREFIX"-global-stack
+    GLOBAL_STACK="$NAMESPACE"-global-stack
     # generate next stage yaml file
     aws cloudformation package                                \
         --template-file $GLOBAL_TEMPLATE                      \
